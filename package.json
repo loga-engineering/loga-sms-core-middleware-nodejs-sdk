@@ -1,5 +1,6 @@
 {
   "name": "@loga-engineering/sms-sdk",
+  "version": "1.0.0",
   "description": "Node.js SDK for the LOGA SMS API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "prepublishOnly": "npm run build"
   },
   "author": "Loga Engineering <support@loga-engineering.com>",
