@@ -14,9 +14,37 @@ jobs:
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
+
+      - name: Extract version from git tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine npm dist-tag
+        id: dist-tag
+        run: |
+          TAG="${{ steps.version.outputs.VERSION }}"
+          if [[ "$TAG" == *"beta"* ]]; then
+            echo "DIST_TAG=beta" >> "$GITHUB_OUTPUT"
+          elif [[ "$TAG" == *"rc"* ]]; then
+            echo "DIST_TAG=rc" >> "$GITHUB_OUTPUT"
+          else
+            echo "DIST_TAG=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate version match
+        run: |
+          PKG_VER=$(node -p "require('./package.json').version")
+          TAG_VER="${{ steps.version.outputs.VERSION }}"
+          if [ "$PKG_VER" != "$TAG_VER" ]; then
+            echo "Mismatch: package.json ($PKG_VER) vs git tag ($TAG_VER)"
+            npm version "$TAG_VER" --no-git-tag-version
+          fi
+
       - run: npm ci
       - run: npm run build
       - run: npm test
-      - run: npm publish --access public
+
+      - name: Publish to npm
+        run: npm publish --tag ${{ steps.dist-tag.outputs.DIST_TAG }} --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.LOGA_SMS_NODEJS_SDK_NPM_TOKEN }}
